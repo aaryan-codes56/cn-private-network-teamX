@@ -122,6 +122,41 @@ curl -I -H 'If-None-Match: "<etag>"' https://app.team1.test/api/config       # -
 | Caching | `cache-control: public, max-age=60`, `etag: "36f00a83…"`, conditional request → `HTTP/2 304`, `content-length: 0` |
 | Wireshark | DNS query/response on UDP 53, SYN/SYN-ACK/ACK to 443, ClientHello/ServerHello/Certificate, encrypted Application Data |
 
+## Evidence
+
+All screenshots are in [`evidence/`](evidence/) (index: [evidence/README.md](evidence/README.md)).
+
+**Load balancing** (terminal output from Mac 1):
+```
+$ for i in 1 2 3 4 5 6; do curl -s -D - https://app.team1.test/api/status -o /dev/null | grep -i x-backend; done
+x-backend: A
+x-backend: B
+x-backend: A
+x-backend: B
+x-backend: A
+x-backend: B
+```
+
+**HTTPS by name, TLS 1.3, HTTP/2, no `-k`**
+
+![curl -v](evidence/G_curl_headers.png)
+
+**Full TCP + TLS exchange in Wireshark** (SYN → SYN-ACK → ACK → Client Hello → Server Hello/Certificate → encrypted Application Data → FIN)
+
+![Wireshark TCP and TLS](evidence/G_tcp_seq_ack.png)
+
+**DNS query and response (UDP 53)**
+
+![Wireshark DNS](evidence/G_wireshark_dns.png)
+
+**Caching: conditional request returns 304**
+
+![304](evidence/F_304.png)
+
+**Both backends down → 502 from the edge**
+
+![502](evidence/FAIL4_502.png)
+
 ## Failure Demonstrations
 
 | # | Failure | How | Observation | What it proves |
