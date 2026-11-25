@@ -29,11 +29,14 @@
 | Fail 4 | [FAIL4_502.png](FAIL4_502.png) | Mac 1 | both backends stopped → `HTTP/2 502` from nginx |
 | Fail 5 | [FAIL5_wrong_port.png](FAIL5_wrong_port.png) | Mac 1 | port 9999 connection refused, ping works |
 
-## To be added before the final evaluation
-- `A_ping_mac1.png` … `A_ping_mac4.png` – ping between all machines
-- `D_load_balancing.png` – terminal loop showing A, B, A, B, A, B (output recorded in the main README)
-- `F_browser_cache.png` – DevTools Network tab showing 304 / disk cache
-- `phase1_capture.pcapng` – saved Wireshark capture
+## Shown live instead of as screenshots
+
+These were demonstrated live during the review; their results are recorded in the main README and the Phase 2 report.
+
+- Ping between all machines – `scripts/preflight.sh` on each Mac (0% loss)
+- Load balancing loop – A, B, A, B, A, B (terminal output in the main README; also `EXTD_1_both_healthy.png`)
+- Browser cache – DevTools Network tab (304 also shown with curl in `F_304.png`)
+- Wireshark capture – opened live; key packets in the `G_*.png` screenshots
 
 # Evidence – Phase 2
 
