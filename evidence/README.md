@@ -34,3 +34,28 @@
 - `D_load_balancing.png` – terminal loop showing A, B, A, B, A, B (output recorded in the main README)
 - `F_browser_cache.png` – DevTools Network tab showing 304 / disk cache
 - `phase1_capture.pcapng` – saved Wireshark capture
+
+# Evidence – Phase 2
+
+Commands for each screenshot are in [docs/PHASE2_RUNBOOK.md](../docs/PHASE2_RUNBOOK.md). Phase 2 IPs: Mac 1 10.7.23.224 · Mac 2 10.7.11.1 · Mac 3 10.7.4.180 · Mac 4 10.7.13.204.
+
+| Ext | File | Taken on | Shows |
+|---|---|---|---|
+| A | [EXTA_1_client_two_dns.png](EXTA_1_client_two_dns.png) | Mac 1 | client lists two DNS servers: 10.7.23.224 (Mac 1), 10.7.13.204 (Mac 4) |
+| A | [EXTA_2_backup_records.png](EXTA_2_backup_records.png) | Mac 4 | backup DNS answers `app.team1.test → 10.7.11.1`, TTL 30 |
+| A | [EXTA_3_primary_answers.png](EXTA_3_primary_answers.png) | Mac 1 | normally the primary answers (SERVER 10.7.23.224) |
+| A | [EXTA_4_failover_dig.png](EXTA_4_failover_dig.png) | Mac 1 | primary stopped → `connection refused`, answer from SERVER 10.7.13.204 |
+| A | [EXTA_5_service_still_works.png](EXTA_5_service_still_works.png) | Mac 1 | site still 200 by name with the primary DNS down |
+| B | [EXTB_1_ttl30.png](EXTB_1_ttl30.png) | Mac 1 | record TTL 30 |
+| B / E | [EXTB_2_cached_old_answer.png](EXTB_2_cached_old_answer.png) | Mac 1 | record changed to the standby edge at 21:05:45 |
+| B / E | [EXTB_3_ttl_expired_switch.png](EXTB_3_ttl_expired_switch.png) | Mac 1 | cached client on `mac2-primary` until 21:05:56, `mac4-standby` from 21:05:58 (13 s) |
+| B | [EXTB_4_flush_immediate.png](EXTB_4_flush_immediate.png) | Mac 1 | after switching back + cache flush: `mac2-primary` immediately |
+| C | [EXTC_1_before_open.png](EXTC_1_before_open.png) | Mac 1 | before pf: port 3001 reachable directly |
+| C | [EXTC_2_rules_mac3.png](EXTC_2_rules_mac3.png), [EXTC_2_rules_mac4.png](EXTC_2_rules_mac4.png) | Mac 3 / 4 | pf rules loaded, only the edge 10.7.11.1 allowed |
+| C | [EXTC_3_client_blocked.png](EXTC_3_client_blocked.png) | Mac 1 | 3001 / 3002 `Operation timed out`, ping 0% loss |
+| C | [EXTC_6_service_still_works.png](EXTC_6_service_still_works.png) | Mac 1 | service still A/B through the edge with pf on |
+| C | [EXTC_8_rollback_mac3.png](EXTC_8_rollback_mac3.png), [EXTC_8_rollback_mac4.png](EXTC_8_rollback_mac4.png) | Mac 3 / 4 | rollback: pf disabled, anchor empty, `/etc/pf.conf` unchanged |
+| D | [EXTD_1_both_healthy.png](EXTD_1_both_healthy.png) | Mac 1 | both backends healthy, A/B alternating |
+| D | [EXTD_2_A_down_all_B.png](EXTD_2_A_down_all_B.png) | Mac 1 | Backend A stopped: all 200 from B, `(502, 200)` = same-request failover |
+| D | [EXTD_4_A_back.png](EXTD_4_A_back.png) | Mac 3 | Backend A restarted, receiving requests from nginx again |
+| F | live | – | faculty-injected fault, diagnosed during the evaluation with `scripts/diagnose.sh` |
