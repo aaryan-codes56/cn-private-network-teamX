@@ -4,6 +4,7 @@ Build docs/PHASE2_REPORT.pdf from docs/PHASE2_REPORT.md.
 
   python3 -m venv ~/rl && ~/rl/bin/pip install reportlab     # once
   ~/rl/bin/python scripts/build_report_pdf.py                # re-run after filling in the results
+  ~/rl/bin/python scripts/build_report_pdf.py docs/OTHER.md  # any other doc -> docs/OTHER.pdf
 
 Supports the subset of Markdown used in the report: # / ## headings, paragraphs,
 "- " bullets, | tables |, ![image](path), **bold**, `code`, [links](...).
@@ -23,9 +24,10 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (Image, KeepTogether, ListFlowable, ListItem, Paragraph,
                                 SimpleDocTemplate, Spacer, Table, TableStyle)
 
+TITLE = "Report"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "docs", "PHASE2_REPORT.md")
-OUT = os.path.join(ROOT, "docs", "PHASE2_REPORT.pdf")
+SRC = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.join(ROOT, "docs", "PHASE2_REPORT.md")
+OUT = os.path.splitext(SRC)[0] + ".pdf"
 
 # ---------------------------------------------------------------- fonts
 FONT_DIR = "/System/Library/Fonts/Supplemental"
@@ -50,6 +52,9 @@ ST = {
     "sub": ParagraphStyle("sub", fontName=BODY, fontSize=10, leading=14, textColor=MUTED, spaceAfter=2),
     "h2": ParagraphStyle("h2", fontName=BOLD, fontSize=14.5, leading=19, textColor=NAVY, spaceBefore=14, spaceAfter=6),
     "body": ParagraphStyle("body", fontName=BODY, fontSize=9.8, leading=14, textColor=INK, spaceAfter=6, alignment=TA_LEFT),
+    "quote": ParagraphStyle("quote", fontName=BODY, fontSize=9.8, leading=14, textColor=INK, leftIndent=10,
+                            borderPadding=(6, 8, 6, 8), backColor=colors.HexColor("#eef4fb"),
+                            borderColor=colors.HexColor("#1e3a5f"), borderWidth=0, spaceBefore=4, spaceAfter=10),
     "cell": ParagraphStyle("cell", fontName=BODY, fontSize=8.2, leading=10.6, textColor=INK),
     "headcell": ParagraphStyle("headcell", fontName=BOLD, fontSize=8.4, leading=10.6, textColor=colors.white),
 }
@@ -113,10 +118,12 @@ def split_row(line):
 
 
 def build():
+    global TITLE
     lines = open(SRC, encoding="utf-8").read().splitlines()
+    TITLE = next((l[2:].split(":")[0].split("(")[0].strip() for l in lines if l.startswith("# ")), "Report")
     doc = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=17 * mm, rightMargin=17 * mm,
                             topMargin=16 * mm, bottomMargin=16 * mm,
-                            title="Phase 2 Final Report - TeamX", author="TeamX")
+                            title=TITLE, author="TeamX")
     W = doc.width
     story, para, i = [], [], 0
 
@@ -154,6 +161,8 @@ def build():
                 i += 1
             story += [table(rows, W), Spacer(1, 8)]
             continue
+        elif s.startswith("> "):
+            flush(); story.append(Paragraph(inline(s[2:]), ST["quote"]))
         elif s.startswith("- "):
             flush()
             items = []
@@ -176,7 +185,7 @@ def build():
         canvas.saveState()
         canvas.setFont(BODY, 8)
         canvas.setFillColor(MUTED)
-        canvas.drawString(d.leftMargin, 9 * mm, "TeamX · Private Network Service Platform · Phase 2 Final Report")
+        canvas.drawString(d.leftMargin, 9 * mm, f"TeamX · Private Network Service Platform · {TITLE}")
         canvas.drawRightString(A4[0] - d.rightMargin, 9 * mm, f"Page {d.page}")
         canvas.restoreState()
 
